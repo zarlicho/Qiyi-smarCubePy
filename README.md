@@ -8,10 +8,6 @@ A minimal asynchronous Python client for the QiYi Smart Cube that:
 - Sends ACKs (CRC16/MODBUS) and optional sync messages
 - Detects solved state
 
-WARNING: The current code will immediately shut down the machine when the cube is solved on Windows. See “Safety” below to disable this behavior.
-
-Repository hint: This README documents the top-level `smartcube.py` file. There is also a simple FastAPI service in `main.py` unrelated to BLE, which exposes Kociemba solver functionality.
-
 ---
 
 ## Features
@@ -43,11 +39,6 @@ Python dependencies:
 - bleak==1.1.1
 - pycryptodome==3.20.0
 
-Optional (only for `main.py` FastAPI server):
-- fastapi
-- uvicorn
-- kociemba
-
 Note: The provided `requirements.txt` currently contains a typo for pycryptodome. Install the correct package name manually or fix the file.
 
 ---
@@ -69,15 +60,6 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install bleak==1.1.1 pycryptodome==3.20.0
 ```
-
-If you want to run the optional FastAPI service in `main.py`:
-```
-pip install fastapi uvicorn kociemba
-```
-
-Typos in requirements.txt:
-- If you prefer using the file, fix `pycroptodome` to `pycryptodome` first.
-
 ---
 
 ## Getting the Cube MAC Address
@@ -147,36 +129,6 @@ Battery:
 - Parsed from the message and printed in percent.
 
 ---
-
-## Safety: Disable Auto-Shutdown on Solve
-
-In `render_cube`, when the cube becomes solved for the first time, this line is executed on Windows:
-```
-os.system("shutdown /s /t 0")
-```
-This will immediately shut down the machine.
-
-To disable:
-1) Easiest: comment out or remove the line in `render_cube`:
-```python
-if solved and not self.was_solved:
-    print("RUBIK'S SOLVED!")
-    # os.system("shutdown /s /t 0")
-```
-
-2) Optional safer guard (edit the code) to use an environment flag:
-```python
-if solved and not self.was_solved:
-    print("RUBIK'S SOLVED!")
-    if os.getenv("SMARTCUBE_SHUTDOWN_ON_SOLVE", "0") == "1":
-        os.system("shutdown /s /t 0")
-```
-Then only shutdown if you explicitly set:
-```
-set SMARTCUBE_SHUTDOWN_ON_SOLVE=1  (Windows)
-export SMARTCUBE_SHUTDOWN_ON_SOLVE=1  (Linux/macOS)
-```
-
 ---
 
 ## API Overview (smartcube.py)
@@ -207,20 +159,6 @@ if __name__ == "__main__":
 ```
 
 ---
-
-## Integrating With a Solver (optional)
-
-`main.py` provides a minimal FastAPI server exposing:
-- `GET /solve/{notation}` → returns `kociemba.solve(notation)`
-
-Notes:
-- The `notation` expected by kociemba is a facelet string in Kociemba’s format, which may differ from the color-letter mapping produced in `smartcube.py`. You may need to remap or recolor the 54-facelet string before passing it to kociemba.
-- Install the optional dependencies:
-  ```
-  pip install fastapi uvicorn kociemba
-  uvicorn main:app --reload
-  ```
-
 ---
 
 ## Troubleshooting
@@ -254,4 +192,3 @@ Notes:
 
 - [bleak](https://github.com/hbldh/bleak)
 - [PyCryptodome](https://github.com/Legrandin/pycryptodome)
-- [Kociemba](https://pypi.org/project/kociemba/)
